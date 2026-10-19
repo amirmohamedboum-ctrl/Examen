@@ -1,26 +1,15 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+const express = require("express")
+const app = express()
 
-const app = express();
-const PORT = process.env.PORT || 4000;
+const dotenv = require("dotenv")
+dotenv.config()
 
-app.use(cors());
-app.use(express.json());
-
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('MongoDB connecté'))
-    .catch((err) => console.error('Erreur MongoDB :', err.message));
+const port = process.env.PORT || 4000
 
 app.get('/', (req, res) => {
-    res.send('Amir, bravo');
-});
+    res.send('Mon premier backend marche!')
+})
 
-app.get('/api/message', (req, res) => {
-    res.json({ message: 'Hello depuis le backend !' });
-});
-
-app.listen(PORT, () => {
-    console.log('Server is running on port ' + PORT);
-});
+app.listen(port, () => {
+    console.log("serveur tourne bien au " + port)
+})
