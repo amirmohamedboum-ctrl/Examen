@@ -1,68 +1,26 @@
-const express = require("express");
-const dotenv = require("dotenv");
-const mongoose = require("mongoose");
-
-dotenv.config();
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+app.use(cors());
 app.use(express.json());
 
-let connectionPromise;
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('MongoDB connecté'))
+    .catch((err) => console.error('Erreur MongoDB :', err.message));
 
-async function connectDB() {
-    if (mongoose.connection.readyState === 1) {
-        return;
-    }
-
-    if (!process.env.MONGODB_URI) {
-        throw new Error("La variable d'environnement MONGODB_URI est manquante.");
-    }
-
-    if (!connectionPromise) {
-        connectionPromise = mongoose
-            .connect(process.env.MONGODB_URI)
-            .catch((error) => {
-                connectionPromise = null;
-                throw error;
-            });
-    }
-
-    try {
-        await connectionPromise;
-    } catch (error) {
-        console.error("Erreur de connexion à MongoDB :", error.message);
-        throw error;
-    }
-}
-
-app.get("/", (req, res) => {
-    res.status(200).send("Mon premier backend marche !");
+app.get('/', (req, res) => {
+    res.send('Amir, bravo');
 });
 
-app.get("/health", async (req, res) => {
-    try {
-        await connectDB();
-        res.status(200).json({
-            status: "OK",
-            server: "running",
-            database: "connected"
-        });
-    } catch (error) {
-        console.error("Erreur de vérification du backend :", error.message);
-        res.status(503).json({
-            status: "ERROR",
-            server: "running",
-            database: "disconnected"
-        });
-    }
+app.get('/api/message', (req, res) => {
+    res.json({ message: 'Hello depuis le backend !' });
 });
 
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`Serveur démarré sur http://localhost:${PORT}`);
-    });
-}
-
-module.exports = app;
+app.listen(PORT, () => {
+    console.log('Server is running on port ' + PORT);
+});
