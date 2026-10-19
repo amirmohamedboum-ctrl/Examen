@@ -27,6 +27,11 @@ app.post('/api/message', (req, res) => {
     res.json({ message: "Bonjour " + nom + ", bien reçu par le back !" })
 })
  
-app.listen(port, () => {
-    console.log("serveur tourne bien au " + port)
-})
+// En local on écoute sur un port, sur Vercel l'app est simplement exportée
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log("serveur tourne bien au " + port)
+    })
+}
+ 
+module.exports = app
