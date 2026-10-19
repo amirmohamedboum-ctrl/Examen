@@ -1,65 +1,93 @@
-const express = require("express")
-const app = express()
+const express = require("express");
+const dotenv = require("dotenv");
+const mongoose = require("mongoose");
 
-const dotenv = require("dotenv")
-dotenv.config()
+dotenv.config();
 
-const mongoose = require("mongoose")
+const app = express();
+app.use(express.json());
 
-let connectionPromise
+const PORT = process.env.PORT || 4000;
 
-const connectDB = async () => {
+let connectionPromise;
+
+async function connectDB() {
     if (mongoose.connection.readyState === 1) {
-        return
+        return;
     }
 
     if (!process.env.MONGODB_URI) {
-        throw new Error("La variable d'environnement MONGODB_URI est manquante.")
+        throw new Error(
+            "La variable MONGODB_URI est absente du fichier .env"
+        );
     }
 
     if (!connectionPromise) {
-        connectionPromise = mongoose.connect(process.env.MONGODB_URI).catch((error) => {
-            connectionPromise = null
-            throw error
-        })
+        connectionPromise = mongoose
+            .connect(process.env.MONGODB_URI)
+            .catch((error) => {
+                connectionPromise = null;
+                throw error;
+            });
     }
 
     try {
-        await connectionPromise
+        await connectionPromise;
     } catch (error) {
-        console.error("Erreur de connexion à MongoDB :", error.message)
-        throw error
+        console.error("Erreur MongoDB :", error.message);
+        throw error;
     }
 }
 
-app.use(async (req, res, next) => {
+// Route principale
+app.get("/", async (req, res) => {
     try {
-        await connectDB()
-        next()
+        await connectDB();
+
+        res.status(200).send("Mon premier backend marche !");
     } catch (error) {
-        next(error)
+        console.error("Erreur backend :", error.message);
+
+        res.status(503).json({
+            message: "Le backend est temporairement indisponible."
+        });
     }
-})
+});
 
-app.get('/', (req, res) => {
-    res.send('Mon premier backend marche!')
-})
+// Vérification de l'état du serveur et de MongoDB
+app.get("/health", async (req, res) => {
+    try {
+        await connectDB();
 
-app.use((error, req, res, next) => {
-    console.error("Erreur du backend :", error.message)
-    res.status(503).send("Le backend est temporairement indisponible.")
-})
+        res.status(200).json({
+            status: "OK",
+            server: "running",
+            database: "connected"
+        });
+    } catch (error) {
+        res.status(503).json({
+            status: "ERROR",
+            database: "disconnected",
+            message: error.message
+        });
+    }
+});
 
+// Démarrage local : Nodemon / Node.js
 if (require.main === module) {
-    const port = process.env.PORT || 4000
-
-    connectDB().then(() => {
-        app.listen(port, () => {
-            console.log("serveur tourne bien au " + port)
+    connectDB()
+        .then(() => {
+            app.listen(PORT, () => {
+                console.log(
+                    `Serveur démarré sur http://localhost:${PORT}`
+                );
+            });
         })
-    }).catch(() => {
-        process.exitCode = 1
-    })
+        .catch((error) => {
+            console.error(
+                "Impossible de démarrer le serveur :",
+                error.message
+            );
+            process.exitCode = 1;
+        });
 }
-
-module.exports = app
