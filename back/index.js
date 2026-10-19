@@ -7,7 +7,7 @@ dotenv.config()
 const port = process.env.PORT || 4000
 
 app.get('/', (req, res) => {
-    res.send('Mon premier backend marche!')
+    res.send('Mon backend marche!')
 })
 
 app.listen(port, () => {
